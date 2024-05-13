@@ -1,26 +1,21 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import './App.css';
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {getCookie} from './tools/getCookie';
+import {setCookie} from './tools/setCookie';
+import MyLoginForm from "./components/Forms/MyLoginForm";
+import MyHeader from "./components/Header/MyHeader";
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
 
 function App() {
-    const [access, setAccess] = useState(localStorage.getItem('accessToken'));
-    const [refresh, setRefresh] = useState(localStorage.getItem('refreshToken'));
+    const [access, setAccess] = useState(getCookie('accessToken'));
+    const [refresh, setRefresh] = useState(getCookie('refreshToken'));
     const [refreshRequired, setRefreshRequired] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [formUsername, setFormUsername] = useState('');
-    const [formPassword, setFormPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [username, setUsername] = useState('');
-    const [email, setEmail] = useState('');
-    const [dateJoined, setDateJoined] = useState('');
+    const [isAuthenticate, setIsAuthenticate] = useState(false);
     const [error, setError] = useState('');
     const csrftoken = getCookie('csrftoken');
+    const [loading, setLoading] = useState(false); // Добавлено состояние loading
+
     useEffect(() => {
         if (access) {
             fetch(
@@ -34,18 +29,17 @@ function App() {
             )
                 .then(response => {
                     if (response.ok) {
+                        setIsAuthenticate(true)
+
                         return response.json();
                     } else {
+                        console.log(response.status, response.statusText);
+                        if (response.status === 401 && response.statusText === "Unauthorized") {
+                            document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        }
                         throw Error(`Something went wrong: code ${response.status}`);
                     }
-                })
-                .then(({data}) => {
-                    setFirstName(data.first_name);
-                    setLastName(data.last_name);
-                    setUsername(data.username);
-                    setEmail(data.email);
-                    setDateJoined(data.date_joined);
-                    setError(null);
                 })
                 .catch(error => {
                     if (error.message === 'refresh') {
@@ -72,15 +66,16 @@ function App() {
             )
                 .then(response => {
                     if (response.ok) {
+
                         return response.json();
                     } else {
                         throw Error(`Something went wrong: code ${response.status}`);
                     }
                 })
                 .then(({access, refresh}) => {
-                    localStorage.setItem('accessToken', access);
+                    setCookie('accessToken', access, 1);
                     setAccess(access);
-                    localStorage.setItem('refreshToken', refresh);
+                    setCookie('refreshToken', refresh, 7);
                     setRefresh(refresh);
                     setError(null);
                 })
@@ -91,66 +86,51 @@ function App() {
         }
     }, [refreshRequired]);
 
-    const submitHandler = e => {
-        e.preventDefault();
-        setLoading(true);
-        fetch(
-            '/api/token/obtain',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8',
-                },
-                body: JSON.stringify({
-                    username: formUsername,
-                    password: formPassword,
-                }),
-            }
-        )
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw Error(`Something went wrong: code ${response.status}`);
-                }
-            })
-            .then(({access, refresh}) => {
-                localStorage.setItem('accessToken', access);
-                setAccess(access);
-                localStorage.setItem('refreshToken', refresh);
-                setRefresh(refresh);
-                setError(null);
-            })
-            .catch(error => {
-                console.log(error);
-                setError('Ошибка, подробности в консоли');
-            })
-            .finally(() => setLoading(false));
-    };
-
     return (
         <div className="App">
-            {error ? <p>{error}</p> : null}
-            {!access ?
-                loading ? "Загрузка..." :
-                    <form className="loginForm" onSubmit={submitHandler}>
-                        <input type="text" name="username" value={formUsername}
-                               onChange={e => setFormUsername(e.target.value)} placeholder="Username"/>
-                        <input type="password" name="password" value={formPassword}
-                               onChange={e => setFormPassword(e.target.value)} placeholder="Password"/>
-                        <input type="submit" name="submit" value="Войти"/>
-                    </form>
-                :
-                !error ?
-                    <div className="Profile">
-                        <h1>{firstName} {lastName}</h1>
-                        <h2>{username}</h2>
-                        <p>email: {email}</p>
-                        <p>Профиль создан {dateJoined}</p>
-                    </div>
-                    :
-                    null
-            }
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={
+                        <>
+                            <MyHeader isAuthenticate={isAuthenticate}/>
+                            "Главная"
+                        </>}/>
+                    <Route path="/login" element={
+
+                        <MyLoginForm
+                            access={access}
+                            setAccess={setAccess}
+                            refresh={refresh}
+                            setRefresh={setRefresh}
+                            loading={loading}
+                            setLoading={setLoading}
+                            error={error}
+                            setError={setError}
+                        />
+
+                    }/>
+                    <Route path="/profile" element={
+                        <>
+                            <MyHeader isAuthenticate={isAuthenticate}/>
+                            "Профиль"
+                        </>
+                    }/>
+                    <Route path="/catalog" element={
+                        <>
+                            <MyHeader isAuthenticate={isAuthenticate}/>
+                            "Каталог"
+                        </>}/>
+                    <Route path="/cart" element={
+                        <>
+                            <MyHeader isAuthenticate={isAuthenticate}/>
+                            "Корзина"
+                        </>}/>
+                    <Route path="/orders" element={<>
+                        <MyHeader isAuthenticate={isAuthenticate}/>
+                        "Заказы"
+                    </>}/>
+                </Routes>
+            </BrowserRouter>
         </div>
     );
 }

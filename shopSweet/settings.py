@@ -118,9 +118,12 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
+AUTH_USER_MODEL = 'core.CustomUser'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 BLACKLIST_AFTER_ROTATION = True
 ROTATE_REFRESH_TOKENS = True
 ACCESS_TOKEN_LIFETIME = datetime.timedelta(hours=7)
 REFRESH_TOKEN_LIFETIME = datetime.timedelta(hours=7)
+
