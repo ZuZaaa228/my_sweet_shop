@@ -43,6 +43,7 @@ def my_logout(request: Request):
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
 def user(request: Request):
+    print(request.parser_context)
     return Response({
         'data': CustomUserSerializer(request.user).data
     })

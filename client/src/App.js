@@ -92,7 +92,9 @@ function App() {
                 <Routes>
                     <Route path="/" element={
                         <>
-                            <MyHeader isAuthenticate={isAuthenticate}/>
+                            <MyHeader loading={loading}
+                                      setLoading={setLoading}
+                                      isAuthenticate={isAuthenticate}/>
                             "Главная"
                         </>}/>
                     <Route path="/login" element={
