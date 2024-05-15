@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {setCookie} from "../../tools/setCookie";
-import {getCookie} from "../../tools/getCookie";
 import {Navigate} from "react-router-dom";
 import MyLoader from "../Loader/MyLoader";
 
