@@ -20,6 +20,7 @@ function MyLoginForm({ access, setAccess, refresh, setRefresh, loading, setLoadi
                     'Content-Type': 'application/json;charset=utf-8',
                 },
                 body: JSON.stringify({
+                    // csrfmiddlewaretoken: props.csrfToken,
                     username: formUsername,
                     password: formPassword,
                 }),
